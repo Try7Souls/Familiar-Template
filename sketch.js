@@ -20,7 +20,7 @@ new p5(function(p) {
 
     const SHOW_UI      = true;   // set false to hide the sidebar while designing
 
-    let CREATURE_SIZE  = 220;    // body diameter in pixels
+    let CREATURE_SIZE  = 210;    // body diameter in pixels
     let DECAY_RATE     = 0.003;  // need rise per frame while tab is focused
     let AWAY_RATE      = 0.020;  // need rise per frame while tab is hidden
     let AFK_PER_HOUR   = 5;      // extra need added per hour since last visit
@@ -32,7 +32,7 @@ new p5(function(p) {
 
     // Colours — also editable via sidebar colour pickers
     let bgColour   = [220, 242, 210];  // background (r, g, b)
-    let bodyColour = [20,  20,  20];   // body fill  (r, g, b)
+    let bodyColour = [139,  0,  0];   // body fill  (r, g, b)
 
 
     // ============================================================
@@ -246,9 +246,39 @@ new p5(function(p) {
         p.scale(bScale);
         drawBody(c);
         drawEyes(c);
+        drawFace(c);
         p.pop();
     }
+function drawFace(c) {
 
+    // Convert need (0–100) into happiness (happy → sad)
+    let happiness = p.map(c.need, 0, 100, 1, -1);
+    happiness = p.constrain(happiness, -1, 1);
+
+    // Mouth positioning
+    let mouthY     = CREATURE_SIZE * 0.18;
+    let mouthWidth = CREATURE_SIZE * 0.30;
+    let mouthCurve = CREATURE_SIZE * 0.18 * happiness;
+
+    // Extra smile when excited
+    if (c.state === 'excited') {
+        mouthCurve *= 1.6;
+    }
+
+    // Draw mouth
+    p.noFill();
+    p.stroke(20, c.bodyAlpha);
+    p.strokeWeight(4);
+    p.strokeCap(p.ROUND);
+
+    p.beginShape();
+    p.vertex(-mouthWidth / 2, mouthY);
+    p.quadraticVertex(0, mouthY + mouthCurve, mouthWidth / 2, mouthY);
+    p.endShape();
+
+    p.noStroke();
+}
+``
 
     // ── EDIT THIS — redesign the creature's body ──────────────
 
@@ -262,11 +292,11 @@ new p5(function(p) {
     // ── EDIT THIS — or remove the call from drawCreature() ────
 
     function drawEyes(c) {
-        let eyeSize    = CREATURE_SIZE * 0.38;
-        let eyeSpacing = CREATURE_SIZE * 0.26;
-        let eyeY       = -CREATURE_SIZE * 0.08;
+        let eyeSize    = CREATURE_SIZE * 0.55;
+        let eyeSpacing = CREATURE_SIZE * 0.16;
+        let eyeY       = -CREATURE_SIZE * 0.16;
 
-        let pupilSize = c.state === 'excited' ? eyeSize * 0.62 : eyeSize * 0.35;
+        let pupilSize = c.state === 'excited' ? eyeSize * 0.38 : eyeSize * 0.30;
 
         let angle     = p.atan2(p.mouseY - c.y, p.mouseX - c.x);
         let mouseDist = p.dist(p.mouseX, p.mouseY, c.x, c.y);
@@ -279,9 +309,14 @@ new p5(function(p) {
             let ey = eyeY;
             p.noStroke();
             p.fill(255);
-            p.ellipse(ex, ey, eyeSize * 0.88, eyeSize * 0.88);
+            p.ellipse(ex, ey, eyeSize * 0.5, eyeSize * 0.5);
+            p.ellipse(ex * 2, ey * 2, eyeSize * 0.5, eyeSize * 0.5);
+            p.ellipse(ex * 2, ey / 8, eyeSize * 0.5, eyeSize * 0.5);
             p.fill(20);
             p.ellipse(ex + px2, ey + py2, pupilSize, pupilSize);
+            p.ellipse(ex * 2 + px2, ey * 2 + py2, pupilSize, pupilSize);
+            p.ellipse(ex * 2 + px2, ey / 8 + py2, pupilSize, pupilSize);
+            
         }
         p.noStroke();
     }
@@ -332,6 +367,7 @@ new p5(function(p) {
         c.micLevel = getMicLevel();
         if (c.micLevel > MIC_THRESHOLD) c.exciteTimer = EXCITED_FRAMES;
     }
+
 
 
     // ============================================================
